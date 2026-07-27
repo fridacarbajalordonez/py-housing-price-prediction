@@ -1,6 +1,19 @@
 # California Housing Price Prediction
 
-Hero image (opcional)
+Dataset: 
+California Housing Dataset
+
+Observations:
+20,640
+
+Models Compared:
+2
+
+Algorithm:
+Linear Regression
+
+Language:
+Python
 
 ## 1. Project Overview
 This project develops and compares two Linear Regression models to predict California housing prices using demographic, geographic, and socioeconomic variables.  
@@ -97,7 +110,7 @@ On the other hand, predictions obtained from the model built over the clean data
 Histogram of residuals in the original dataset model are not nearly normally distributed and centered around zero, indicating poor predictability in this model.
 
 ![residualsLM2.png](images/residualsLM2.png)
-For the clean dataset model we can appreciate that residuals are evenly distributed and centered into zero, which is the desired behaviour for residuals.
+For the clean dataset model we can appreciate that residuals are approximately normally distributed around zero.
 
 ### Regression Evaluation Metrics
 The Regression Evaluation Metrics were computed for both models. Table bellow shows the result for each model by metric.
@@ -108,7 +121,9 @@ The Regression Evaluation Metrics were computed for both models. Table bellow sh
 | MSE    | 6.160635         | 0.411455      |
 | RMSE   | 2.482063         | 0.641448      |
 
-Clean Dataset metrics are significantly lower than Original Dataset metrics. This indicates that removing the observations reduces the bias and increases the accuracy of prediction for our model.
+Clean Dataset metrics are significantly lower than Original Dataset metrics. 
+Removing the right-censored observations substantially reduced prediction errors and improved the overall predictive performance of the model.
+
 
 ## 7. Key Findings 
 - Removing right-censored observations substantially improved prediction accuracy.
