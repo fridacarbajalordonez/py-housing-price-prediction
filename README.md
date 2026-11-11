@@ -1,147 +1,166 @@
 # California Housing Price Prediction
 
-Dataset: 
-California Housing Dataset
-
-Observations:
-20,640
-
-Models Compared:
-2
-
-Algorithm:
-Linear Regression
-
-Language:
-Python
-
 ## 1. Project Overview
-This project develops and compares two Linear Regression models to predict California housing prices using demographic, geographic, and socioeconomic variables.  
-The objective is to evaluate the performance of a Linear Regression model and analyze the impact of data cleaning on prediction accuracy.
 
-The project follows a complete Machine Learning workflow, including data exploration, preprocessing, model development, evaluation, and model comparison.
+This project explores the use of machine learning to predict the median house value of California districts using demographic, housing, and geographic features.
 
-Main skills demonstrated:
+The main objective is to investigate how data quality, feature engineering, and model selection affect predictive performance, with particular attention to two challenges:
 
-- Python
-- Pandas
-- NumPy
-- Matplotlib
-- Seaborn
-- Scikit-learn
+- **Right-censored target values:** House values above $500,000 are recorded at the $500,000 cap.
+- **Extreme feature outliers:** Some census-derived variables contain implausible values that can significantly affect model performance.
+
+The project follows a complete machine learning workflow, from exploratory data analysis and data-quality investigation to model comparison, evaluation, and interpretation.
+
+## 2. Dataset
+
+The project uses the California Housing dataset from Scikit-learn.
+
+- **20,640 observations**
+- **8 original predictive features**
+- Target variable: `Price`, representing median house value in units of $100,000.
+
+The predictors include median income, house age, average rooms and bedrooms, population, average occupancy, latitude, and longitude.
+
+## 3. Project Workflow
+
+### 3.1 Exploratory Data Analysis (EDA)
+
+Conducted an exploratory analysis to understand the dataset structure, feature distributions, correlations, geographic patterns, and potential data-quality issues.
+
+Key findings included:
+
+- Right-censoring of house values at $500,000.
+- Extreme values in census-derived features such as `AveRooms`, `AveBedrms`, and `AveOccup`.
+- Strong geographic relationships between latitude, longitude, and housing prices.
+- Potential multicollinearity among certain predictors.
+
+### 3.2 Experimental Design and Data Quality
+
+Designed a consistent evaluation strategy to ensure fair comparisons between models.
+
+- Created one fixed 80/20 train/test split using a fixed random seed.
+- Reused the same test set across all experiments.
+- Learned outlier-clipping thresholds exclusively from training data to prevent data leakage.
+- Evaluated models using RMSE, MAE, and R².
+- Also reported RMSE on the uncensored portion of the test set.
+
+### 3.3 Linear Regression Experiments
+
+Compared four configurations using Linear Regression to investigate the effects of target censoring and feature outliers:
+
+| Experiment | Training data | Feature treatment |
+|---|---|---|
+| A. Baseline | All observations | Original features |
+| B. Drop censored | Uncensored observations only | Original features |
+| C. Clip outliers | All observations | Upper clipping at the 99th percentile |
+| D. Both | Uncensored observations only | Upper clipping at the 99th percentile |
+
+A custom Scikit-learn transformer was implemented to learn clipping thresholds from the training data.
+
+**Key finding:** Removing censored observations had almost no effect on performance, while clipping extreme feature values reduced RMSE by approximately 8.9% compared with the baseline.
+
+This suggested that extreme predictor values were a more significant source of error for the initial linear model than target censoring.
+
+### 3.4 Feature Engineering
+
+Created three additional features to capture relationships that were not fully represented by the original predictors:
+
+- `BedroomRatio`: Proportion of average bedrooms relative to average rooms.
+- `RoomsPerPerson`: Average rooms per household member, representing crowding.
+- `DistNearestCity`: Distance in kilometers to the nearest of five major California cities.
+
+Geographic distances were calculated using the **Haversine formula**, based on latitude and longitude.
+
+All engineered features were calculated using information from the same observation, without using information from other rows.
+
+### 3.5 Model Comparison and Cross-Validation
+
+Compared four regression algorithms using both the original and engineered feature sets:
+
 - Linear Regression
-- Exploratory Data Analysis (EDA)
-- Model Evaluation
-- Data Cleaning
-- Data Visualization
+- Ridge Regression
+- Random Forest Regressor
+- Histogram-based Gradient Boosting Regressor
 
-## 2. Business Problem
+Used **5-fold cross-validation on the training set** to compare model performance while keeping the test set untouched.
 
-Accurately estimating housing prices is valuable for:
+The evaluation showed that tree-based ensemble models substantially outperformed linear models.
 
-- Real estate agencies
-- Property investors
-- Financial institutions
-- Home buyers
+**Best configuration:** Histogram-based Gradient Boosting with engineered features.
 
-The goal is to estimate the median house value using demographic and geographical variables.
+- Cross-validation RMSE: **0.4619**
+- Cross-validation R²: **0.8403**
 
-## 3. Dataset
-In this analysis we are using a California Housing Dataset provided by scikit-learn for building a Linear Regression Model.
-The dataset contains 20,640 observations (instances) and 8 predictor variables (attributes) describing demographic and housing characteristics of California districts.
- The target variable (Price) represents the median house value expressed on thousands of dollars ($100,000).
+Feature engineering improved all evaluated models, although the choice of algorithm had a larger impact on predictive performance.
 
-| Attribute  | Description                              |
-|------------|------------------------------------------|
-| MedInc     | median income in block group             |
-| HouseAge   | median house age in block group          |
-| AveRooms   | average number of rooms per household    |
-| AveBedrms  | average number of bedrooms per household |
-| Population | block group population                   |
-| AveOccup   | average number of household members      |
-| Latitude   | block group latitude                     |
-| Longitude  | block group longitude                    | 
+### 3.6 Final Model Evaluation
 
+The best configuration selected through cross-validation was refitted on the full training set and evaluated on the untouched test set.
 
+**Final model: Histogram-based Gradient Boosting with engineered features.**
 
-## 4. Project Workflow
+| Metric | Baseline Linear Regression | Final Model |
+|---|---:|---:|
+| RMSE | 0.7456 | 0.4570 |
+| R² | 0.5758 | 0.8406 |
+| MAE | ~$53,320 | ~$30,069 |
 
-![workflow1.png](images/workflow1.png)
+The final model achieved:
 
+- **38.7% reduction in RMSE**
+- **43.6% reduction in MAE**
+- **Improvement in R² from 0.5758 to 0.8406**
 
-Instead of training a single Linear Regression model, this project compares two models trained under different data preparation strategies to evaluate the impact of right-censored observations on predictive performance.
+### 3.7 Model Interpretation and Error Analysis
 
-### 4.1 Exploratory Data Analysis
-![correlation_heatmap.png](images/correlation_heatmap.png)
-The correlation matrix shows that the strongest correlation for Price exists with MedInc attribute.  
-![pairplot.png](images/pairplot.png)
-The pairplot illustrates the distribution of each variable and the pairwise relationships among the predictor variables.
-![original_price.png](images/original_price.png)
-The Price distribution shows House prices above the upper limit are right-censored and recorded as the maximum value of 5.
-This might generate bias and affect the accuracy of data for building the model.
-Thus, building two models would be preferible in order to evaluate if this right-censoring problem affects significantly to the predictive model.
+Evaluated the final model through:
 
-### 4.2 Data Cleaning Strategy
-In order to handle the right-censoring problem, we remove observations where Price is equal to the upper limit (5).
-The two models are build following the same model development for making the results comparable.
+- Predicted vs. observed values.
+- Residual distribution analysis.
+- Mean absolute error across different price ranges.
+- Permutation feature importance.
 
-| Model                              | Description                              |
-|------------------------------------|------------------------------------------|
-| Original Dataset Linear Regression | Uses the original California Housing dataset.             |
-| Cleaned Dataset Linear Regression  | Removes right-censored observations before training.         |
+The analysis showed that:
 
-## 5. Model Development
-The Linear Regression Model is applied to both original and cleaned datasets in the same method:
-- Define independent predictor **X** variables and dependent **Y** target variable
-- Split the data sample into training and testing sets using the same random seed and train-test proportion to make it comparable to previous model.
-- Use the  `class sklearn.linear_model.LinearRegression()` to estimate the intercept and the regression coefficients that best describe the relationship between the predictor variables and the target variable by minimizing the residual sum of squares.
+- Most predictions were relatively close to the ideal prediction line.
+- Residuals were concentrated around zero, with a slight right-skewed tail.
+- The model tended to overestimate lower-priced districts and underestimate the most expensive ones.
+- Absolute prediction errors increased with house prices.
+- Latitude, longitude, and median income were the most influential predictors.
+- Among the engineered features, distance to the nearest major city contributed the most.
 
-## 6. Results
+## 4. Key Conclusions
 
-### Predicted vs Actual Plot
-![actual_vs_predicted_LM1.png](images/actual_vs_predicted_LM1.png)
-This plot shows that predictions obtained from the model built over the original dataset don´t match the real values
+1. **Data quality matters:** Extreme values in the predictor variables significantly affected the initial linear regression model. Clipping these values improved performance more than removing censored target observations.
 
-![actual_vs_predicted_LM2.png](images/actual_vs_predicted_LM2.png)
-On the other hand, predictions obtained from the model built over the clean dataset have a better approach to real data.
+2. **Model selection matters:** Tree-based ensemble methods captured nonlinear relationships and interactions more effectively than linear regression.
 
-### Residuals Histogram 
-![residualsLM1.png](images/residualsLM1.png)
-Histogram of residuals in the original dataset model are not nearly normally distributed and centered around zero, indicating poor predictability in this model.
+3. **Feature engineering adds value:** Geographic distance and housing-related ratios improved cross-validated performance across the evaluated algorithms.
 
-![residualsLM2.png](images/residualsLM2.png)
-For the clean dataset model we can appreciate that residuals are approximately normally distributed around zero.
+4. **Model performance is not uniform:** Higher-priced districts have larger absolute errors, while the target cap limits the ability to evaluate the true value of expensive properties.
 
-### Regression Evaluation Metrics
-The Regression Evaluation Metrics were computed for both models. Table bellow shows the result for each model by metric.
+5. **Business relevance:** The final model reduced the average absolute prediction error from approximately $53,320 to $30,069, providing more accurate estimates for district-level housing values.
 
-| Metric | Original Dataset | Clean Dataset |
-|--------|------------------|---------------|
-| MAE    | 0.562056         | 0.476551      |
-| MSE    | 6.160635         | 0.411455      |
-| RMSE   | 2.482063         | 0.641448      |
+## 5. Limitations and Future Improvements
 
-Clean Dataset metrics are significantly lower than Original Dataset metrics. 
-Removing the right-censored observations substantially reduced prediction errors and improved the overall predictive performance of the model.
+- The dataset represents information collected around 1990. Inflation and more recent economic indicators would be necessary for contemporary price estimation.
+- The target variable is capped at $500,000, limiting the reliability of predictions for high-value districts. Censored regression approaches, such as Tobit models, could be explored.
+- The dataset contains district-level aggregates, so predictions represent median district values rather than individual property prices.
+- Further hyperparameter tuning and additional feature exploration could improve model performance.
 
+## 6. Technologies and Skills
 
-## 7. Key Findings 
-- Removing right-censored observations substantially improved prediction accuracy.
-- The cleaned model produced smaller prediction errors.
-- Residuals became more symmetrically distributed.
-- Data quality had a stronger impact than modifying the regression algorithm.
+**Python | Pandas | NumPy | Matplotlib | Seaborn | Scikit-learn | Jupyter Notebook**
 
+Key skills demonstrated:
 
-## 8. Future Improvements
-Possible extensions of this project include:
-
-- Improve data: Feature Engineering  to create additional explanatory variables.
-- Improve the evaluation: Evaluate model robustness using K-Fold Cross Validation instead of a single train-test split.
-- Improve the model: Compare the Linear Regression baseline with more advanced regression algorithms such as Random Forest and Gradient Boosting.
-- Improve the statistical approach: Investigate statistical methods specifically designed for censored target variables instead of removing censored observations.
-
-
-## 12. About the Author
-Developed by Frida Elizabeth Carbajal Ordóñez.
-
-Actuarial Science graduate with an interest in data science, analytics, and data engineering. Passionate about transforming raw data into meaningful insights through SQL, Python, and data visualization.
+- Exploratory Data Analysis
+- Data Quality Assessment
+- Outlier Detection and Treatment
+- Feature Engineering
+- Regression Modeling
+- Cross-Validation
+- Model Evaluation and Selection
+- Residual Analysis
+- Permutation Feature Importance
+- Statistical Interpretation and Data-Driven Decision Making
